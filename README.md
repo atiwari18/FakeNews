@@ -1,4 +1,4 @@
-##Running Scripts
+## Running Scripts
 To see a sample of the dataset run:
 ```
 python test_scripts/dataset_test.py
