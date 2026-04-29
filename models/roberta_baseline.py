@@ -1,5 +1,6 @@
 from __future__ import annotations
 import sys
+import torch
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -45,13 +46,34 @@ def softmax_numpy(logits: np.ndarray):
     exp_values = np.exp(shifted)
     return exp_values / np.sum(exp_values, axis=1, keepdims=True)
 
+def extract_logits(predictions):
+    #Check if predictions is tuple
+    if isinstance(predictions, tuple):
+        predictions = predictions[0]
+
+    logits = np.asarray(predictions)
+
+    #If there is an extra singleton dimension squeeze it out
+    if logits.ndim == 3 and logits.shape[1] == 1:
+        logits = np.squeeze(logits, axis=1)
+
+    return logits
+
 #Compute metrics
 def compute_metrics(eval_pred: tuple[np.ndarray, np.ndarray]):
-    logits, labels = eval_pred
+    predictions, labels = eval_pred
+
+    logits = extract_logits(predictions)
     
     #convert logits into probabilities for the positive class.
-    probs = softmax_numpy(logits)
+    prob_matrix= softmax_numpy(logits)
+    probs = prob_matrix[:, 1]
     preds = np.argmax(logits, axis=1)
+
+    print("logits shape:", logits.shape)
+    print("prob_matrix shape:", prob_matrix.shape)
+    print("probs shape:", probs.shape)
+    print("labels shape:", np.asarray(labels).shape)
 
     #Metrics
     accuracy = accuracy_score(labels, preds)
@@ -71,10 +93,11 @@ def compute_metrics(eval_pred: tuple[np.ndarray, np.ndarray]):
 #validation, test and future retraining rounds. 
 def evaluate_split(trainer: Trainer, dataset):
     predictions = trainer.predict(dataset)
-    logits = predictions.predictions
+    logits = extract_logits(predictions.predictions)
     labels = predictions.label_ids
 
-    probs = softmax_numpy(logits)[:, 1]
+    prob_matrix = softmax_numpy(logits)
+    probs = prob_matrix[:, 1]
     preds = np.argmax(logits, axis=1)
 
     #Computing metrics
@@ -207,8 +230,8 @@ def build_training_arguments(output_dir: str):
         output_dir=output_dir,
         eval_strategy="epoch",
         save_strategy="epoch",
-        logging_strategy="steps",
-        logging_steps=50,
+        logging_strategy="epoch",
+        #logging_steps=50,
         per_device_train_batch_size=8,
         per_device_eval_batch_size=16,
         num_train_epochs=3,
@@ -225,6 +248,14 @@ def build_training_arguments(output_dir: str):
 
 def main():
     set_seed(42)
+
+    print("Torch version:", torch.__version__)
+    print("CUDA available:", torch.cuda.is_available())
+
+    if torch.cuda.is_available():
+        print("GPU name:", torch.cuda.get_device_name(0))
+    else:
+        print("Training will run on CPU.")
 
     # Build tokenized train/validation/test splits for RoBERTa.
     data_config = RobertaDataConfig(
@@ -252,7 +283,7 @@ def main():
         args=training_args,
         train_dataset=tokenized_datasets["train"],
         eval_dataset=tokenized_datasets["validation"],
-        tokenizer=builder.tokenizer,
+        processing_class=builder.tokenizer,
         data_collator=data_collator,
         compute_metrics=compute_metrics,
     )
