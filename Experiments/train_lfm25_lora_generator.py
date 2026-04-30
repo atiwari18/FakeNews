@@ -245,10 +245,9 @@ def main() -> None:
     #Print basic hardware information before training starts.
     print("Torch version:", torch.__version__)
     print("CUDA available:", torch.cuda.is_available())
-
-    #If a GPU is available, print its name so logs show what hardware trained the run.
     if torch.cuda.is_available():
         print("GPU name:", torch.cuda.get_device_name(0))
+    print()
 
     #load the tokenizer for the chosen LFM2.5 model.
     tokenizer = AutoTokenizer.from_pretrained(config.model_name)
