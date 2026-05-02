@@ -107,6 +107,10 @@ def build_generation_split(split: str, max_samples: int | None = None) -> Datase
         # Pull one generation example from the existing dataset wrapper.
         sample = liar2_dataset[index]
 
+        #Keep only FAKE examples.
+        if int(sample["label"]) != 0:
+            continue
+
         #The prompt contains the control information: label, speaker, subject, and context.
         records["conditioning_prompt"].append(sample["conditioning_prompt"])
 

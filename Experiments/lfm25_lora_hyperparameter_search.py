@@ -29,6 +29,8 @@ class SearchConfig:
     lora_r: int
     lora_alpha: int
     max_length: int
+    lora_dropout: float
+    warmup_ratio: float
     per_device_train_batch_size: int
     gradient_accumulation_steps: int
 
@@ -39,9 +41,11 @@ class SearchResult:
     num_train_epochs: float
     lora_r: int
     lora_alpha: int
+    lora_dropout: float
     max_length: int
     per_device_train_batch_size: int
     gradient_accumulation_steps: int
+    warmup_ratio: float
 
     # Store the metrics we care about.
     final_train_loss: float | None
