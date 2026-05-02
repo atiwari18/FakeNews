@@ -167,7 +167,7 @@ def main() -> None:
 
     #Search space
     learning_rates = [2e-5, 3e-5, 5e-5]
-    num_train_epochs_list = [6, 10]
+    num_train_epochs_list = [3, 6, 10]
     weight_decays = [0.01]
     train_batch_sizes = [8]
     eval_batch_size = 16
