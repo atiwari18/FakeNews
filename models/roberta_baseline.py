@@ -150,8 +150,9 @@ def plot_training_history(trainer: Trainer, save_path: Optional[str] = None):
 
     if save_path:
         plt.savefig(save_path, dpi=200)
+        plt.close()
 
-    plt.show()
+    #plt.show()
 
 
 def plot_roc_curve(results: EvaluationResults, save_path: Optional[str] = None):
