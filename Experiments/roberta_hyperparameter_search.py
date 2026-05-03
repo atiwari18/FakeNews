@@ -34,6 +34,7 @@ class SearchConfig:
 #Class to store the final validation metrics for one completed run
 @dataclass
 class SearchResult:
+    run_name: str
     learning_rate: float
     num_train_epochs: int
     weight_decay: float

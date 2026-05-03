@@ -29,6 +29,7 @@ MANIFEST
 #FOLDER
 /roberta_baseline_output/
 /lfm25_lora_claim_generator/
+*.out
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

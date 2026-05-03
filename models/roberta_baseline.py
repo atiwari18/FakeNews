@@ -1,6 +1,7 @@
 from __future__ import annotations
 import sys
 import torch
+import torch.nn as nn
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -23,8 +24,11 @@ from transformers import (
     AutoModelForSequenceClassification, 
     Trainer, 
     TrainingArguments, 
-    set_seed
+    set_seed, 
+    RobertaModel
 )
+
+from transformers.modeling_outputs import SequenceClassifierOutput
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(PROJECT_ROOT))
@@ -245,6 +249,38 @@ def build_training_arguments(output_dir: str):
         report_to="none",
         seed=42,
     )
+
+#RoBERTa with Credit Vector
+class RoBERTaWithCreditVector(nn.Module):
+    def __init__(self, model_name="roberta-base", num_labels=2):
+        super().__init__()
+        self.roberta = RobertaModel.from_pretrained(model_name)
+        hidden_size=self.roberta.config.hidden_size
+
+        self.classifer = nn.Sequential(
+            nn.Linear(hidden_size + 6, 256),
+            nn.LeakyReLU(negative_slope=0.01),
+            nn.Dropout(0.1),
+            nn.Linear(256, 128),
+            nn.LeakyReLU(negative_slope=0.01),
+            nn.Dropout(0.1),
+            nn.Linear(128, num_labels)
+        )
+
+        self.loss_fn = nn.CrossEntropyLoss()
+
+    def forward(self, input_ids, attention_mask, credit_vector, labels=None):
+        outputs = self.roberta(input_ids=input_ids, attention_mask=attention_mask)
+
+        pooled = outputs.last_hidden_state[:, 0, :]
+        combined = torch.cat([pooled, credit_vector], dim=1)
+        logits = self.classifer(combined)
+
+        loss = None
+        if labels is not None:
+            loss = self.loss_fn(logits, labels)
+
+        return SequenceClassifierOutput(loss=loss, logits=logits)
 
 
 def main():

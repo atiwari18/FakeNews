@@ -99,7 +99,7 @@ class RobertaDatasetBuilder:
 
         #The trainer only needs tokenized inputs and labels for the baseline.
         tokenized_datasets = tokenized_datasets.remove_columns(
-            ["text", "statement", "metadata_text", "credit_vector"]
+            ["text", "statement", "metadata_text"]
         )
 
         return tokenized_datasets
