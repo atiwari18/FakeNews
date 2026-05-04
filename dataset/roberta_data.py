@@ -102,6 +102,12 @@ class RobertaDatasetBuilder:
             ["text", "statement", "metadata_text"]
         )
 
+        #Force the dataset to return pytorch tesnsors, including the credit vector.
+        tokenized_datasets.set_format(
+            type="torch", 
+            columns=["input_ids", "attention_mask", "labels", "credit_vector"]
+        )
+
         return tokenized_datasets
     
     #Dynamic padding

@@ -25,7 +25,8 @@ from transformers import (
     Trainer, 
     TrainingArguments, 
     set_seed, 
-    RobertaModel
+    RobertaModel, 
+    EarlyStoppingCallback
 )
 
 from transformers.modeling_outputs import SequenceClassifierOutput
@@ -157,6 +158,7 @@ def plot_training_history(trainer: Trainer, save_path: Optional[str] = None):
         plt.close()
 
     #plt.show()
+    plt.close()
 
 
 def plot_roc_curve(results: EvaluationResults, save_path: Optional[str] = None):
@@ -174,7 +176,8 @@ def plot_roc_curve(results: EvaluationResults, save_path: Optional[str] = None):
     if save_path:
         plt.savefig(save_path, dpi=200)
 
-    plt.show()
+    #plt.show()
+    plt.close()
 
 
 def plot_pr_curve(results: EvaluationResults, save_path: Optional[str] = None):
@@ -192,7 +195,8 @@ def plot_pr_curve(results: EvaluationResults, save_path: Optional[str] = None):
     if save_path:
         plt.savefig(save_path, dpi=200)
 
-    plt.show()
+    #plt.show()
+    plt.close()
 
 
 def plot_confusion_matrix(results: EvaluationResults, save_path: Optional[str] = None):
@@ -207,7 +211,8 @@ def plot_confusion_matrix(results: EvaluationResults, save_path: Optional[str] =
     if save_path:
         plt.savefig(save_path, dpi=200)
 
-    plt.show()
+    #plt.show()
+    plt.close()
 
 
 def print_metrics(name: str, results: EvaluationResults) -> None:
@@ -239,15 +244,17 @@ def build_training_arguments(output_dir: str):
         #logging_steps=50,
         per_device_train_batch_size=8,
         per_device_eval_batch_size=16,
-        num_train_epochs=3,
+        num_train_epochs=10,
         learning_rate=2e-5,
         weight_decay=0.01,
+        warmup_ratio=0.06, 
         load_best_model_at_end=True,
         metric_for_best_model="macro_f1",
         greater_is_better=True,
-        save_total_limit=2,
+        save_total_limit=1,
         report_to="none",
         seed=42,
+        remove_unused_columns=False
     )
 
 #RoBERTa with Credit Vector
@@ -286,11 +293,15 @@ class RoBERTaWithCreditVector(nn.Module):
 def main():
     set_seed(42)
 
+    #Setting up Results Directory
+    results_dir = PROJECT_ROOT / "Results" / "Roberta_Results"
+    results_dir.mkdir(parents=True, exist_ok=True)
+
     print("Torch version:", torch.__version__)
     print("CUDA available:", torch.cuda.is_available())
 
     if torch.cuda.is_available():
-        print("GPU name:", torch.cuda.get_device_name(0))
+        print("GPU name:", torch.cuda.get_device_name(0), "\n")
     else:
         print("Training will run on CPU.")
 
@@ -306,14 +317,10 @@ def main():
     tokenized_datasets = builder.build_tokenized_dataset_dict()
     data_collator = builder.get_data_collator()
 
-    # Standard binary classification RoBERTa head.
-    # This baseline uses the combined text field only.
-    model = AutoModelForSequenceClassification.from_pretrained(
-        data_config.model_name,
-        num_labels=2,
-    )
+    #Building the custom model
+    model = RoBERTaWithCreditVector(model_name=data_config.model_name, num_labels=2)
 
-    training_args = build_training_arguments(output_dir="roberta_baseline_output")
+    training_args = build_training_arguments(output_dir=str(results_dir/"trainer_output"))
 
     trainer = Trainer(
         model=model,
@@ -323,6 +330,7 @@ def main():
         processing_class=builder.tokenizer,
         data_collator=data_collator,
         compute_metrics=compute_metrics,
+        callbacks=[EarlyStoppingCallback(early_stopping_patience=2)]
     )
 
     trainer.train()
@@ -335,11 +343,10 @@ def main():
     print_metrics("Test Results", test_results)
 
     # Plot the optimization behavior and final test diagnostics.
-    plot_training_history(trainer, save_path="roberta_training_history.png")
-    plot_roc_curve(test_results, save_path="roberta_test_roc.png")
-    plot_pr_curve(test_results, save_path="roberta_test_pr.png")
-    plot_confusion_matrix(test_results, save_path="roberta_test_confusion.png")
-
+    plot_training_history(trainer, save_path=str(results_dir / "roberta_cv_training_history.png"))
+    plot_roc_curve(test_results, save_path=str(results_dir /"roberta_cv_test_roc.png"))
+    plot_pr_curve(test_results, save_path=str(results_dir / "roberta_cv_test_pr.png"))
+    plot_confusion_matrix(test_results, save_path=str(results_dir / "roberta_cv_test_confusion.png"))
 
 if __name__ == "__main__":
     main()
