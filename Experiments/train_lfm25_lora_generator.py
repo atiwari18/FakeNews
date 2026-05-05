@@ -2,9 +2,17 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import Any
 import torch
+import json
+import json
+import math
+import os
+
+os.environ.setdefault("MPLBACKEND", "Agg")
+
+import matplotlib.pyplot as plt
 
 from datasets import Dataset
 from peft import LoraConfig, get_peft_model
@@ -48,6 +56,9 @@ class LoraTrainingConfig:
     #Dropout adds regularization so the adapter does not memorize as easily.
     lora_dropout: float = 0.05
 
+    #Fraction of training used for learning-rate warmup.
+    warmup_ratio: float = 0.03
+
     #Set this to a small number like 200 for a quick smoke test.
     max_train_samples: int | None = None
 
@@ -70,6 +81,7 @@ def parse_args() -> LoraTrainingConfig:
     parser.add_argument("--lora-r", type=int, default=defaults.lora_r)
     parser.add_argument("--lora-alpha", type=int, default=defaults.lora_alpha)
     parser.add_argument("--lora-dropout", type=float, default=defaults.lora_dropout)
+    parser.add_argument("--warmup-ratio", type=float, default=defaults.warmup_ratio)
     parser.add_argument("--max-train-samples", type=int, default=defaults.max_train_samples)
     parser.add_argument("--max-eval-samples", type=int, default=defaults.max_eval_samples)
 
@@ -239,7 +251,50 @@ def build_lora_model(config: LoraTrainingConfig):
    
     return model
 
+def safe_perplexity(loss: float):
+    return math.exp(loss) if loss < 20 else float("inf")
 
+
+def extract_final_train_loss(log_history: list[dict]):
+    train_losses = [entry["loss"] for entry in log_history if "loss" in entry]
+
+    if not train_losses:
+        return None
+
+    return train_losses[-1]
+
+
+def plot_run_history(log_history: list[dict], output_path: Path, title: str) -> None:
+    train_steps = []
+    train_losses = []
+    eval_steps = []
+    eval_losses = []
+
+    for entry in log_history:
+        if "loss" in entry and "eval_loss" not in entry:
+            train_steps.append(entry["step"])
+            train_losses.append(entry["loss"])
+
+        if "eval_loss" in entry:
+            eval_steps.append(entry["step"])
+            eval_losses.append(entry["eval_loss"])
+
+    plt.figure(figsize=(8, 5))
+
+    if train_steps:
+        plt.plot(train_steps, train_losses, label="Training loss")
+
+    if eval_steps:
+        plt.plot(eval_steps, eval_losses, marker="o", label="Validation loss")
+
+    plt.xlabel("Training step")
+    plt.ylabel("Loss")
+    plt.title(title)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200)
+    plt.close()
+    
 def main() -> None:
     #Read command-line options into our config object.
     config = parse_args()
@@ -297,7 +352,7 @@ def main() -> None:
         gradient_accumulation_steps=config.gradient_accumulation_steps,
         num_train_epochs=config.num_train_epochs,
         learning_rate=config.learning_rate,
-        warmup_ratio=0.03,
+        warmup_ratio=config.warmup_ratio,
         weight_decay=0.0,
         bf16=torch.cuda.is_available(),
         fp16=False,
@@ -317,7 +372,38 @@ def main() -> None:
     )
 
     # Run the actual LoRA fine-tuning loop.
-    trainer.train()
+    train_output = trainer.train()
+
+    # Run a final validation pass so we can report final eval loss/perplexity.
+    eval_metrics = trainer.evaluate()
+
+    # Collect the final metrics we care about.
+    eval_loss = float(eval_metrics["eval_loss"])
+    eval_ppl = safe_perplexity(eval_loss)
+    final_train_loss = extract_final_train_loss(trainer.state.log_history)
+
+    # Make sure the output directory exists before writing plots/metrics.
+    output_path = Path(config.output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    # Save a training/validation loss plot.
+    plot_run_history(
+        log_history=trainer.state.log_history,
+        output_path=output_path / "training_validation_loss.png",
+        title="Final LFM2.5 LoRA Training History",
+    )
+
+    # Save final metrics and the exact training config.
+    metrics = {
+        "config": asdict(config),
+        "final_train_loss": final_train_loss,
+        "eval_loss": eval_loss,
+        "eval_ppl": eval_ppl,
+        "train_runtime": train_output.metrics.get("train_runtime"),
+    }
+
+    with open(output_path / "final_metrics.json", "w", encoding="utf-8") as metrics_file:
+        json.dump(metrics, metrics_file, indent=2)
 
     # Save the small LoRA adapter files, not a full copy of the base model.
     trainer.model.save_pretrained(config.output_dir)
@@ -325,8 +411,11 @@ def main() -> None:
     # Save the tokenizer beside the adapter so generation scripts use the same tokenization.
     tokenizer.save_pretrained(config.output_dir)
 
-    # Print the final location so it is easy to find after training completes.
+    # Print the final location and final validation metrics.
     print(f"\nSaved LoRA adapter and tokenizer to: {config.output_dir}")
+    print(f"Final train loss: {final_train_loss}")
+    print(f"Final eval loss : {eval_loss:.4f}")
+    print(f"Final eval PPL  : {eval_ppl:.4f}")
 
 
 if __name__ == "__main__":

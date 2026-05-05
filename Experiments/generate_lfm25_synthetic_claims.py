@@ -104,10 +104,33 @@ def main() -> None:
         include_metadata=True,
     )
 
+    fake_conditioning_samples = [
+        conditioning_dataset[index]
+        for index in range(len(conditioning_dataset))
+        if int(conditioning_dataset[index]["label"]) == 0
+    ]
+
+    if not fake_conditioning_samples:
+        raise ValueError(f"No FAKE conditioning samples found in split: {args.conditioning_split}")
+
     #open the output CSV file.
     with open(args.output_csv, "w", newline="", encoding="utf-8") as csv_file:
         #define the columns we want to save.
-        fieldnames = ["synthetic_claim", "label", "speaker", "subject", "context", "conditioning_prompt"]
+        fieldnames = [
+            "synthetic_claim",
+            "text",
+            "label",
+            "speaker",
+            "subject",
+            "context",
+            "conditioning_prompt",
+            "true_counts",
+            "mostly_true_counts",
+            "half_true_counts",
+            "mostly_false_counts",
+            "false_counts",
+            "pants_on_fire_counts",
+        ]
 
         #create a DictWriter so each row is named by column.
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
@@ -117,8 +140,8 @@ def main() -> None:
 
         #generate the requested number of synthetic claims.
         for index in range(args.num_claims):
-            #cycle through real prompts if num_claims is larger than the conditioning split.
-            sample = conditioning_dataset[index % len(conditioning_dataset)]
+            #cycle through fake prompts if num_claims is larger than the conditioning split.
+            sample = fake_conditioning_samples[index % len(fake_conditioning_samples)]
 
             #pull out the prompt that tells the model what kind of claim to generate.
             prompt = sample["conditioning_prompt"]
@@ -133,14 +156,33 @@ def main() -> None:
                 top_p=args.top_p,
             )
 
+            metadata_parts = []
+            for field_name in ["speaker", "subject", "context"]:
+                value = sample[field_name]
+                if value:
+                    metadata_parts.append(f"{field_name}: {value}")
+
+            text = synthetic_claim
+            if metadata_parts:
+                text = f"{synthetic_claim}\n\n[METADATA] {' | '.join(metadata_parts)}"
+
+            credit_vector = sample["credit_vector"].tolist()
+
             writer.writerow(
                 {
                     "synthetic_claim": synthetic_claim,
-                    "label": int(sample["label"]),
+                    "text": text,
+                    "label": 0,
                     "speaker": sample["speaker"],
                     "subject": sample["subject"],
                     "context": sample["context"],
                     "conditioning_prompt": prompt,
+                    "true_counts": credit_vector[0],
+                    "mostly_true_counts": credit_vector[1],
+                    "half_true_counts": credit_vector[2],
+                    "mostly_false_counts": credit_vector[3],
+                    "false_counts": credit_vector[4],
+                    "pants_on_fire_counts": credit_vector[5],
                 }
             )
 
