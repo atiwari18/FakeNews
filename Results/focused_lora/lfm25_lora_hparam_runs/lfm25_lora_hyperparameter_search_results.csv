@@ -1,0 +1,3 @@
+run_name,learning_rate,num_train_epochs,lora_r,lora_alpha,lora_dropout,max_length,per_device_train_batch_size,gradient_accumulation_steps,warmup_ratio,final_train_loss,eval_loss,eval_ppl,train_runtime
+run_001,0.0002,6,32,64,0.05,160,4,4,0.06,2.9058978271484377,3.28743577003479,26.774120554787014,770.1477
+run_002,0.0002,10,32,64,0.05,160,4,4,0.06,2.5273719787597657,3.4375500679016113,31.110645756725123,1328.6028

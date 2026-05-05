@@ -1,18 +1,34 @@
 from __future__ import annotations
 import csv
+import faulthandler
 import json
 import math
+import os
 import sys
 import itertools
 from dataclasses import asdict, dataclass
 from pathlib import Path
+
+os.environ.setdefault("MPLBACKEND", "Agg")
+faulthandler.enable()
+
+def log_stage(message: str) -> None:
+    print(f"[lfm25-hparam] {message}", flush=True)
+
+log_stage("import start")
+log_stage("importing matplotlib")
 import matplotlib.pyplot as plt
+log_stage("importing torch")
 import torch
-from transformers import Trainer, TrainingArguments, AutoTokenizer, set_seed
+log_stage("importing transformers AutoTokenizer")
+from transformers import AutoTokenizer
+log_stage("importing transformers set_seed")
+from transformers import set_seed
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(PROJECT_ROOT))
 
+log_stage("importing LFM training helpers")
 from Experiments.train_lfm25_lora_generator import (
     LoraTrainingConfig,
     build_generation_split,
@@ -20,7 +36,9 @@ from Experiments.train_lfm25_lora_generator import (
     build_tokenize_function,
     causal_lm_collator
 )
+log_stage("importing result helpers")
 from Experiments.roberta_hyperparameter_search import save_results_csv, save_best_result_json
+log_stage("imports complete")
 
 @dataclass
 class SearchConfig:
@@ -139,10 +157,10 @@ def plot_search_summary(results: list[SearchResult], output_path: Path) -> None:
     plt.close()
 
 def run_single_experiment(config: SearchConfig, run_name: str, tokenizer: AutoTokenizer, train_dataset, eval_dataset, output_root):
-    print("\n" + "=" * 80)
-    print(f"Starting run: {run_name}")
-    print(asdict(config))
-    print("=" * 80)
+    print("\n" + "=" * 80, flush=True)
+    log_stage(f"Starting run: {run_name}")
+    print(asdict(config), flush=True)
+    print("=" * 80, flush=True)
 
     #convert this search config into the config expected by the LoRA training helpers.
     lora_config = LoraTrainingConfig(
@@ -159,9 +177,11 @@ def run_single_experiment(config: SearchConfig, run_name: str, tokenizer: AutoTo
     )
 
     #build a tokenizer for this run's max_length
+    log_stage(f"{run_name}: building tokenize function")
     tokenize_function = build_tokenize_function(tokenizer, max_length=config.max_length)
 
     #tokenize the training split.
+    log_stage(f"{run_name}: tokenizing train split")
     tokenized_train = train_dataset.map(
         tokenize_function,
         batched=True,
@@ -169,6 +189,7 @@ def run_single_experiment(config: SearchConfig, run_name: str, tokenizer: AutoTo
         desc=f"Tokenizing train for {run_name}",
     )
 
+    log_stage(f"{run_name}: tokenizing validation split")
     tokenized_eval = eval_dataset.map(
         tokenize_function,
         batched=True,
@@ -177,8 +198,15 @@ def run_single_experiment(config: SearchConfig, run_name: str, tokenizer: AutoTo
     )
 
     #Fresh model and Lora adater
+    log_stage(f"{run_name}: loading base model and attaching LoRA")
     model = build_lora_model(lora_config)
 
+    use_bf16 = torch.cuda.is_available() and torch.cuda.is_bf16_supported()
+
+    log_stage(f"{run_name}: importing TrainingArguments")
+    from transformers import TrainingArguments
+
+    log_stage(f"{run_name}: building TrainingArguments bf16={use_bf16} fp16={torch.cuda.is_available() and not use_bf16}")
     training_args = TrainingArguments(
         output_dir=str(output_root / run_name),
         eval_strategy="epoch",
@@ -192,13 +220,17 @@ def run_single_experiment(config: SearchConfig, run_name: str, tokenizer: AutoTo
         learning_rate=config.learning_rate,
         warmup_ratio=config.warmup_ratio,
         weight_decay=0.0,
-        bf16=torch.cuda.is_available(),
-        fp16=False,
-        gradient_checkpointing=True,
+        bf16=use_bf16,
+        fp16=torch.cuda.is_available() and not use_bf16,
+        gradient_checkpointing=False,
         report_to="none",
         seed=42,
     )
 
+    log_stage(f"{run_name}: importing Trainer")
+    from transformers import Trainer
+
+    log_stage(f"{run_name}: creating Trainer")
     trainer = Trainer(
         model=model,
         args=training_args,
@@ -207,9 +239,11 @@ def run_single_experiment(config: SearchConfig, run_name: str, tokenizer: AutoTo
         data_collator=causal_lm_collator(tokenizer),
     )
 
+    log_stage(f"{run_name}: starting train")
     train_output = trainer.train()
 
     #run final validation pass after training
+    log_stage(f"{run_name}: starting final evaluation")
     eval_metrics = trainer.evaluate()
 
     #save this run's loss curve.
@@ -245,11 +279,21 @@ def run_single_experiment(config: SearchConfig, run_name: str, tokenizer: AutoTo
     )
 
 def main():
+    log_stage(f"Python: {sys.version}")
+    log_stage(f"Torch: {torch.__version__}")
+    log_stage(f"Torch CUDA: {torch.version.cuda}")
+    log_stage(f"CUDA available: {torch.cuda.is_available()}")
+    if torch.cuda.is_available():
+        log_stage(f"GPU: {torch.cuda.get_device_name(0)}")
+        log_stage(f"bf16 supported: {torch.cuda.is_bf16_supported()}")
+
+    log_stage("setting seed")
     set_seed(42)
 
     output_root = Path("lfm25_lora_hparam_runs")
     output_root.mkdir(exist_ok=True)
 
+    log_stage("loading tokenizer")
     tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-350M")
 
     #Some causal LMs do not define a pad token, so reuse EOS if needed.
@@ -257,15 +301,16 @@ def main():
         tokenizer.pad_token = tokenizer.eos_token
 
     #Load raw generation splits once.
+    log_stage("building raw train split")
     train_dataset = build_generation_split("train")
+    log_stage("building raw validation split")
     eval_dataset = build_generation_split("validation")
 
     #Search Space
-    learning_rates = [1e-4, 2e-4]
-    num_train_epochs = [1, 3]
-    lora_ranks = [16, 32]
-    lora_alphas = {
-        16: [32], 
+    learning_rates = [2e-4]
+    num_train_epochs = [6, 10]
+    lora_ranks = [32]
+    lora_alphas = { 
         32: [64]
     }
     lora_dropout = [0.05]
@@ -309,7 +354,7 @@ def main():
 
             configs.append(config)
 
-    print(f"Total runs to execute: {len(configs)}")
+    log_stage(f"Total runs to execute: {len(configs)}")
 
     # Store successful runs here.
     results: list[SearchResult] = []
@@ -331,13 +376,13 @@ def main():
             results.append(result)
 
         except Exception as exc:
-            print(f"\nRun failed: {run_name}")
-            print(asdict(config))
-            print(f"Error: {exc}")
+            print(f"\nRun failed: {run_name}", flush=True)
+            print(asdict(config), flush=True)
+            print(f"Error: {exc}", flush=True)
 
     # Stop cleanly if every run failed.
     if not results:
-        print("\nNo successful runs completed.")
+        log_stage("No successful runs completed.")
         return
 
     # Lower validation loss is better.
@@ -354,7 +399,7 @@ def main():
         output_path=output_root / "lfm25_lora_best_hyperparameters.json",)
 
     # Save summary plots across all runs.
-    plot_search_summary(results=results, output_root=output_root)
+    plot_search_summary(results=results, output_path=output_root / "lfm25_lora_search_summary.png")
 
     print("\n" + "=" * 80)
     print("Best validation configuration")

@@ -204,12 +204,13 @@ def causal_lm_collator(tokenizer: AutoTokenizer):
 
 def build_lora_model(config: LoraTrainingConfig):
     #Use bf16 on CUDA when available; it is memory efficient and stable on modern GPUs.
-    dtype = torch.bfloat16 if torch.cuda.is_available() else torch.float32
+    use_bf16 = torch.cuda.is_available() and torch.cuda.is_bf16_supported()
+    dtype = torch.bfloat16 if use_bf16 else torch.float32
 
     #Load the base causal language model; only LoRA adapter weights will be trainable.
     model = AutoModelForCausalLM.from_pretrained(
         config.model_name,
-        torch_dtype=dtype,
+        dtype=dtype,
         device_map="auto" if torch.cuda.is_available() else None,
     )
 
