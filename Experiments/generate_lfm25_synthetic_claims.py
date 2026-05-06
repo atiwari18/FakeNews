@@ -73,6 +73,8 @@ def generate_one_claim(model, tokenizer, prompt: str, max_new_tokens: int, tempe
             temperature=temperature,
             top_p=top_p,
             max_new_tokens=max_new_tokens,
+            repetition_penalty = 1.5, 
+            no_repeat_ngram_size = 6,
             pad_token_id=tokenizer.pad_token_id,
             eos_token_id=tokenizer.eos_token_id,
         )
@@ -113,8 +115,12 @@ def main() -> None:
     if not fake_conditioning_samples:
         raise ValueError(f"No FAKE conditioning samples found in split: {args.conditioning_split}")
 
+    #Create the output directory if the user passed in a nested path.
+    output_csv_path = Path(args.output_csv)
+    output_csv_path.parent.mkdir(parents=True, exist_ok=True)
+    
     #open the output CSV file.
-    with open(args.output_csv, "w", newline="", encoding="utf-8") as csv_file:
+    with open(output_csv_path, "w", newline="", encoding="utf-8") as csv_file:
         #define the columns we want to save.
         fieldnames = [
             "synthetic_claim",
