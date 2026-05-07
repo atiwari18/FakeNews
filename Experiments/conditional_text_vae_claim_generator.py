@@ -62,6 +62,12 @@ def parse_args() -> argparse.Namespace:
     train.add_argument("--kl-warmup-epochs", type=int, default=8)
     train.add_argument("--grad-clip", type=float, default=1.0)
     train.add_argument("--early-stopping-patience", type=int, default=10)
+    train.add_argument(
+        "--early-stopping-min-epochs",
+        type=int,
+        default=None,
+        help="Do not early-stop before this epoch. Defaults to --kl-warmup-epochs.",
+    )
     train.add_argument("--seed", type=int, default=42)
 
     generate = subparsers.add_parser("generate", help="Sample synthetic fake claims from a trained VAE.")
@@ -528,6 +534,7 @@ def train_vae(args: argparse.Namespace) -> None:
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
     best_eval_loss = math.inf
+    best_eval_reconstruction = math.inf
     epochs_without_improvement = 0
     history = []
 
@@ -585,7 +592,25 @@ def train_vae(args: argparse.Namespace) -> None:
         else:
             epochs_without_improvement += 1
 
-        if args.early_stopping_patience > 0 and epochs_without_improvement >= args.early_stopping_patience:
+        if eval_metrics["reconstruction_loss"] < best_eval_reconstruction:
+            best_eval_reconstruction = eval_metrics["reconstruction_loss"]
+            torch.save(
+                {
+                    "model_state_dict": model.state_dict(),
+                    "vocab": asdict(vocab),
+                    "config": config,
+                    "train_args": vars(args),
+                },
+                output_dir / "best_reconstruction_model.pt",
+            )
+
+        early_stopping_min_epochs = args.early_stopping_min_epochs or args.kl_warmup_epochs
+        can_stop = epoch >= early_stopping_min_epochs
+        if (
+            can_stop
+            and args.early_stopping_patience > 0
+            and epochs_without_improvement >= args.early_stopping_patience
+        ):
             print(
                 "Early stopping triggered after "
                 f"{epochs_without_improvement} epochs without validation loss improvement."
