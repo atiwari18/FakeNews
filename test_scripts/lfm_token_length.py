@@ -11,7 +11,7 @@ from dataset.dataset import LIAR2Dataset
 tokenizer = AutoTokenizer.from_pretrained("LiquidAI/LFM2.5-350M")
 
 dataset = LIAR2Dataset(
-    split="train",
+    split="test",
     task_type="generation",
     label_scheme="binary",
     include_metadata=True,

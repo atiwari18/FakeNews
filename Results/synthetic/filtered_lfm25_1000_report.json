@@ -6,64 +6,65 @@
   "accepted_rows": 1000,
   "duplicate_or_near_duplicate_rows_skipped": 0,
   "quality_reason_counts_before_selection": {
-    "ellipsis": 781,
-    "unfinished": 1815,
-    "unbalanced_parentheses": 43,
-    "repeated_3gram": 2
+    "unfinished": 1553,
+    "ellipsis": 810,
+    "unbalanced_parentheses": 69,
+    "repeated_3gram": 6,
+    "repeated_4gram": 1
   },
   "min_score_accepted": 80,
   "max_score_accepted": 100,
-  "mean_score_accepted": 83.06,
+  "mean_score_accepted": 87.568,
   "accepted_examples": [
     {
       "score": 100,
       "reasons": [],
-      "synthetic_claim": "Says the Gulf Coast has been flooded for 3,000 years. Theres no other reason why it would take so long to flood again after Hurricane Harvey in Texas last year and also there is nothing natural that could explain such massive flooding events occurring every few decades from Central America through North Africa into Europe or around here at Florida up until now."
+      "synthetic_claim": "Photo shows a group of Ukrainian soldiers attacking NATO tanks. The photo was taken in Ukraine and is now being used as evidence against the Russians during their invasion campaign to stop it from spreading online, according to sources close at large on both sides. This is not what happened with Russias attack videos going live after they were posted for sharing across social media platforms worldwide over two weeks ago today!"
     },
     {
       "score": 100,
       "reasons": [],
-      "synthetic_claim": "Says Barack Obama said, \"We've been drinking in our home for as long (as 1960) and I'm happy with it. It's so easy to take an empty bottle of water from the tap - we're going into public house or bar on Friday night all over again that way! And people will do exactly same thing!\""
+      "synthetic_claim": "Says President Barack Obama said, \"We're going to be the first president in American History that did not have an issue with slavery. It was never acceptable for us and America's people before me\" (2000). He also tweeted about his presidential background saying he has no experience as governor of Florida or mayor city council member since 2016-2021 but is now running again after winning reelection!"
     },
     {
       "score": 100,
       "reasons": [],
-      "synthetic_claim": "If you vote against healthcare, Democrats will kill American jobs. And if your political affiliation is Republican or Democratic \u2014 it's a great job choice for both parties to do something important and meaningful about their country by helping people afford health insurance through reformed government spending under ObamaCare legislation The answer should be 'yes'."
+      "synthetic_claim": "The FBI is \"getting involved\" in the murder of 2 women and children. They are trying to stop them from getting married, they have been arrested for their involvement with this plot so far! \ud83d\udc94\ud83d\udc70\u200d\u2640\ufe0f\u2764\ufe0f #FBIHunter!!"
     },
     {
       "score": 100,
       "reasons": [],
-      "synthetic_claim": "All the vaccines that are in use today have been banned because they cause something called myocarditis. (Its) dangerous, it causes heart attack and stroke! It should be eliminated now before anyone has to die or get infected again by COVID-19 vaccine but not yet done!\" They will no longer \"be able\" vaccinated people from China.\""
+      "synthetic_claim": "The federal government has \"never been able to solve the housing crisis. It's not even possible for us, as states and local governments are trying very hard in this country that we can't do it right now,\" because they have never succeeded at solving their own problem of low rates."
     },
     {
       "score": 100,
       "reasons": [],
-      "synthetic_claim": "Says Donald Trump tweeted that he won the 2016 presidential election, \"I have been successful from last year up until now. I'll win again next week and it's going to be my second term because of all those years in office.\""
+      "synthetic_claim": "Says House Democrats are going to vote for the Trump administration's plan and give up their rights. They will be forced into an illegal government that has no laws, can't run elections or speak freely in public. In addition they have signed off on President Donald J Obama\u2019s COVID-19 shutdown policy by signing his signature before it was approved! This is NOT what happened when he took office!"
     },
     {
       "score": 100,
       "reasons": [],
-      "synthetic_claim": "Says the United States' 14-time all-Americans are only three of them who have had any serious injury that could've put their career at risk. Two other players from California were shot because they got hit in there when it went out, and then we let 'em run for his name if he says no more but what was done?"
+      "synthetic_claim": "Says Scott Walker has not opposed the use of marijuana on veterans. He supports it and is in favor for its safety benefits, even if hes against growing recreational drug cultivation to protect his own money from addiction-related expenses such as medical bills or lost wages at work that could be used instead."
     },
     {
       "score": 100,
       "reasons": [],
-      "synthetic_claim": "Says a photo shows Joe Biden in the car with Michael Jordan. Its not COVID, it is 1918 Flu / Influenza Virus, and Dr. James Mallory says that was wrong when he tweeted about his father being diagnosed earlier this year after Trump passed out of bed on March 24th at age 37!"
+      "synthetic_claim": "Says Joe Biden said, \"I have never been to the bar. I've only ever attended 2-3 bars in my lifetime.\" He also says he's not drunk on beer or whiskey because they're legal under federal law and state laws but illegal for him personally if you ask questions about it!"
     },
     {
       "score": 100,
       "reasons": [],
-      "synthetic_claim": "Says Bill Cosbys death was an artificial intelligence accident. The police were too busy investigating and talking to his wife in 2013, not realizing it could happen at any time of day or night on the internet with anyone who wants that info released online."
+      "synthetic_claim": "Says former Gov. Tom Scott has been in the Senate for 14 years and has voted to cut Social Security benefits by $1,000 per year since he took office at Ohios capital city of Cleveland last fall. He also supported breaking up welfare programs that helped immigrants with their children from being required under federal law during his time as governor before becoming mayor when serving two terms over three decades ago."
     },
     {
       "score": 100,
       "reasons": [],
-      "synthetic_claim": "Says Judge Samuel Alito was banned from giving his opinion on the constitutionality of abortion. He is now out and about doing work for Plank v Washington 2022, saying he should have been able to do so in case she hadnt had that ban! #AbortionPlakat!"
+      "synthetic_claim": "Says President Barack Obama said, \"Its time for the American people to be taught that they are not only white but also black. It is important we learn from our past so all Americans can come together as one nation of equal opportunity citizens.\""
     },
     {
       "score": 100,
       "reasons": [],
-      "synthetic_claim": "Says Florida has the most gun licensing in state, which is 26 times higher than neighboring states. And since its been open from Monday through Sunday to regulate guns throughout our community - there have never seemed any cases of illegal firearm trafficking or violence anywhere around here, according to Governor Rick Scott."
+      "synthetic_claim": "The COVID-19 vaccine is a money laundering scheme. It's designed to make money for the government, not people who need it most, and they're using fake test results in their country of origin as proof that vaccines are working against them! They also claim there was no actual risk from this virus because we had 1 million cases before vaccination started so now you have millions more deaths after getting vaccinated again!"
     }
   ]
 }

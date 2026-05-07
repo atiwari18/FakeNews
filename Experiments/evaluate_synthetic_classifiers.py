@@ -167,6 +167,7 @@ def evaluate_roberta(
         report_to="none",
         remove_unused_columns=False,
     )
+    
     trainer = Trainer(model=model, args=args, processing_class=tokenizer)
     predictions = trainer.predict(dataset)
     logits = np.asarray(predictions.predictions)

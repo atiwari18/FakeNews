@@ -21,8 +21,6 @@ def parse_args():
     parser.add_argument("--output-csv",default="Results/synthetic/filtered_lfm25_1000_claims.csv",)
     parser.add_argument("--report-json", default="Results/synthetic/filtered_lfm25_1000_report.json",)
     parser.add_argument("--target-size", type=int, default=1000)
-    parser.add_argument("--min-words", type=int, default=12)
-    parser.add_argument("--max-words", type=int, default=75)
     parser.add_argument("--near-duplicate-threshold", type=float, default=0.92)
     return parser.parse_args()
 

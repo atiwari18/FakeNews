@@ -1,0 +1,40 @@
+[
+  {
+    "model_name": "logistic_regression",
+    "num_examples": 1000,
+    "accuracy": 0.827,
+    "fake_recall": 0.827,
+    "false_real_rate": 0.17300000000000004,
+    "macro_f1": 0.4526546250684182,
+    "confusion_matrix": [
+      [
+        827,
+        173
+      ],
+      [
+        0,
+        0
+      ]
+    ],
+    "classification_report": "              precision    recall  f1-score   support\n\n        FAKE       1.00      0.83      0.91      1000\n        REAL       0.00      0.00      0.00         0\n\n    accuracy                           0.83      1000\n   macro avg       0.50      0.41      0.45      1000\nweighted avg       1.00      0.83      0.91      1000\n"
+  },
+  {
+    "model_name": "roberta_credit_vector:/home/atiwari/RoBERTa_Finetuning_Experiment/Results/Roberta_Results_2/Roberta_Results/trainer_output/checkpoint-9188",
+    "num_examples": 1000,
+    "accuracy": 0.764,
+    "fake_recall": 0.764,
+    "false_real_rate": 0.236,
+    "macro_f1": 0.4331065759637188,
+    "confusion_matrix": [
+      [
+        764,
+        236
+      ],
+      [
+        0,
+        0
+      ]
+    ],
+    "classification_report": "              precision    recall  f1-score   support\n\n        FAKE       1.00      0.76      0.87      1000\n        REAL       0.00      0.00      0.00         0\n\n    accuracy                           0.76      1000\n   macro avg       0.50      0.38      0.43      1000\nweighted avg       1.00      0.76      0.87      1000\n"
+  }
+]

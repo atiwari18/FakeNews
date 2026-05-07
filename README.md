@@ -23,6 +23,11 @@ An [LFM2-1.2B](https://www.liquid.ai/liquid-foundation-models) model fine-tuned 
  
 LFM2 uses a novel hybrid architecture combining gated convolutions with grouped query attention, not a standard transformer, making this the first benchmark of this architecture on misinformation generation.
 
+### Method 2 - Conditional Text VAE
+A conditional variational autoencoder trained on LIAR2 fake claims. The encoder maps each fake claim into a latent distribution, while the decoder reconstructs and samples fake claims conditioned on speaker, subject, and context metadata.
+
+Unlike the transformer-based classifiers, the VAE script does not impose a fixed maximum claim length on training examples. Claims are tokenized with a project-local word/punctuation tokenizer and padded dynamically per batch.
+
 ## Running Scripts
 To see a sample of the dataset, run:
 ```bash
@@ -32,4 +37,14 @@ python test_scripts/dataset_test.py
 To run another testing, training, or hyperparameter script, use:
 ```bash 
 python folder_name/file_to_run.py
+```
+
+To train the conditional text VAE generator, run:
+```bash
+python Experiments/conditional_text_vae_claim_generator.py train
+```
+
+To generate VAE synthetic claims after training, run:
+```bash
+python Experiments/conditional_text_vae_claim_generator.py generate
 ```
