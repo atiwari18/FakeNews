@@ -57,9 +57,11 @@ def parse_args() -> argparse.Namespace:
     train.add_argument("--epochs", type=int, default=25)
     train.add_argument("--batch-size", type=int, default=16)
     train.add_argument("--learning-rate", type=float, default=1e-3)
+    train.add_argument("--weight-decay", type=float, default=0.01)
     train.add_argument("--beta", type=float, default=0.15)
     train.add_argument("--kl-warmup-epochs", type=int, default=8)
     train.add_argument("--grad-clip", type=float, default=1.0)
+    train.add_argument("--early-stopping-patience", type=int, default=10)
     train.add_argument("--seed", type=int, default=42)
 
     generate = subparsers.add_parser("generate", help="Sample synthetic fake claims from a trained VAE.")
@@ -523,9 +525,10 @@ def train_vae(args: argparse.Namespace) -> None:
         condition_dim=args.condition_dim,
         dropout=args.dropout,
     ).to(device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
     best_eval_loss = math.inf
+    epochs_without_improvement = 0
     history = []
 
     config = {
@@ -569,6 +572,7 @@ def train_vae(args: argparse.Namespace) -> None:
 
         if eval_metrics["loss"] < best_eval_loss:
             best_eval_loss = eval_metrics["loss"]
+            epochs_without_improvement = 0
             torch.save(
                 {
                     "model_state_dict": model.state_dict(),
@@ -578,6 +582,15 @@ def train_vae(args: argparse.Namespace) -> None:
                 },
                 output_dir / "best_model.pt",
             )
+        else:
+            epochs_without_improvement += 1
+
+        if args.early_stopping_patience > 0 and epochs_without_improvement >= args.early_stopping_patience:
+            print(
+                "Early stopping triggered after "
+                f"{epochs_without_improvement} epochs without validation loss improvement."
+            )
+            break
 
     with (output_dir / "training_history.json").open("w", encoding="utf-8") as history_file:
         json.dump(history, history_file, indent=2)
