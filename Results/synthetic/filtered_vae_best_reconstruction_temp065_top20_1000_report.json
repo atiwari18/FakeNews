@@ -1,0 +1,70 @@
+{
+  "input_csv": "Results/synthetic/raw_vae_best_reconstruction_temp065_top20_2000_claims.csv",
+  "output_csv": "Results/synthetic/filtered_vae_best_reconstruction_temp065_top20_1000_claims.csv",
+  "target_size": 1000,
+  "raw_rows": 2000,
+  "accepted_rows": 1000,
+  "duplicate_or_near_duplicate_rows_skipped": 0,
+  "quality_reason_counts_before_selection": {
+    "unbalanced_parentheses": 21,
+    "unfinished": 48,
+    "ellipsis": 73,
+    "repeated_3gram": 8,
+    "repeated_4gram": 2
+  },
+  "min_score_accepted": 100,
+  "max_score_accepted": 100,
+  "mean_score_accepted": 100.0,
+  "accepted_examples": [
+    {
+      "score": 100,
+      "reasons": [],
+      "synthetic_claim": "trump's proposed police has received more likelyat the white house bill o'brien aren't voting."
+    },
+    {
+      "score": 100,
+      "reasons": [],
+      "synthetic_claim": "says his tax cut law, the number of irs is moving to be martial income tax cuts."
+    },
+    {
+      "score": 100,
+      "reasons": [],
+      "synthetic_claim": "says the irs at least 15, 000 a federal governmentand is a fortune from an independent."
+    },
+    {
+      "score": 100,
+      "reasons": [],
+      "synthetic_claim": "amazons was bornto the lowest level in florida just like illegal aliens."
+    },
+    {
+      "score": 100,
+      "reasons": [],
+      "synthetic_claim": "every single candidate have voted to cut $ 1. 5 million of dollars in federal workers."
+    },
+    {
+      "score": 100,
+      "reasons": [],
+      "synthetic_claim": "tylenol has passed a new york timesto get rid (and) mandates could be."
+    },
+    {
+      "score": 100,
+      "reasons": [],
+      "synthetic_claim": "says north carolina in 2010, isno longer to be the money."
+    },
+    {
+      "score": 100,
+      "reasons": [],
+      "synthetic_claim": "my opponent took office. hes still took more money from the government to use their lives."
+    },
+    {
+      "score": 100,
+      "reasons": [],
+      "synthetic_claim": "video showsnon - owned gun owners to be one of the military order."
+    },
+    {
+      "score": 100,
+      "reasons": [],
+      "synthetic_claim": "republican senate candidate obama was offered out of state government pay in the state of a union."
+    }
+  ]
+}
